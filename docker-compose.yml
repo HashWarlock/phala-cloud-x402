@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  app:
+    image: ubuntu:24.04
+    platform: linux/amd64
+    container_name: phala-cloud-x402
+    ports:
+      - "3000:3000"
+    environment:
+      - GITHUB_REPO=${GITHUB_REPO:-https://github.com/HashWarlock/phala-cloud-x402.git}
+      - GIT_COMMIT_HASH=${GIT_COMMIT_HASH:-main}
+      - UPDATE_CODE=${UPDATE_CODE:-false}
+      # Required
+      - TOP_UP_COST=${TOP_UP_COST:-1000000}
+
+      # Network Configuration (at least one required)
+      - EVM_RECEIVING_ADDRESS=${EVM_RECEIVING_ADDRESS}
+      - SOLANA_RECEIVING_ADDRESS=${SOLANA_RECEIVING_ADDRESS}
+
+      # Network Selection (optional)
+      - EVM_NETWORK=${EVM_NETWORK:-base-sepolia}
+      - SOLANA_NETWORK=${SOLANA_NETWORK:-devnet}
+
+      # Facilitator
+      - FACILITATOR_URL=${}
+
+      # Phala Cloud
+      - PHALA_API_URL=${PHALA_API_URL:-https://cloud-api.phala.com}
+      - PHALA_CLOUD_API_KEY=${PHALA_CLOUD_API_KEY}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+
+      # Dstack (optional)
+      - DSTACK_APP_ID=${DSTACK_APP_ID}
+      - DSTACK_GATEWAY_DOMAIN=${DSTACK_GATEWAY_DOMAIN}
+    command: >
+      bash -c "
+        apt-get update &&
+        apt-get install -y git curl nodejs npm &&
+        mkdir -p /app/.state &&
+        if [ ! -f /app/.state/initialized ] || [ \"$$UPDATE_CODE\" = \"true\" ]; then
+          echo 'Cloning/updating repository...' &&
+          cd /tmp &&
+          git clone $$GITHUB_REPO repo &&
+          cd repo &&
+          git checkout $$GIT_COMMIT_HASH &&
+          cp -r /tmp/repo/* /app/ &&
+          cp -r /tmp/repo/.* /app/ 2>/dev/null || true &&
+          rm -rf /tmp/repo &&
+          touch /app/.state/initialized &&
+          echo 'Repository initialized/updated';
+        else
+          echo 'Repository already initialized';
+        fi &&
+        cd /app &&
+        chmod +x entrypoint.sh &&
+        exec bash /app/entrypoint.sh
+      "
+    restart: unless-stopped
+
+volumes:
+  node_modules:
