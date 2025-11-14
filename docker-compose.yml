@@ -23,7 +23,7 @@ services:
       - SOLANA_NETWORK=${SOLANA_NETWORK:-devnet}
 
       # Facilitator
-      - FACILITATOR_URL=${}
+      - FACILITATOR_URL=${FACILITATOR_URL:-https://facilitator.corbits.io}
 
       # Phala Cloud
       - PHALA_API_URL=${PHALA_API_URL:-https://cloud-api.phala.com}
