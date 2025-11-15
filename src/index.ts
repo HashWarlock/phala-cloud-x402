@@ -109,7 +109,7 @@ app.get("/balance/:workspace", async (c) => {
 });
 
 // Paid endpoint - topup
-app.post(
+app.get(
   "/topup/:workspace",
   await middleware.createMiddleware({
     facilitatorURL,
