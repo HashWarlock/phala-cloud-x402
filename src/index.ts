@@ -64,7 +64,7 @@ const buildPaymentAccepts = () => {
       amount: TOP_UP_COST,
       payTo: SOLANA_RECEIVING_ADDRESS,
     });
-    accepts.push([
+    accepts.push(
       xSolanaSettlement({
         network: solanaNetwork as any,
         asset: "USDC",
@@ -77,7 +77,7 @@ const buildPaymentAccepts = () => {
         amount: TOP_UP_COST,
         payTo: SOLANA_RECEIVING_ADDRESS,
       }),
-    ]);
+    );
   }
 
   if (EVM_RECEIVING_ADDRESS) {
