@@ -55,8 +55,6 @@ if (!usdcInfo) {
   throw new Error(`couldn't look up SPLToken ${splTokenName} on ${solanaNetwork}!`);
 }
 
-const app = express();
-
 // Helper function to build payment accepts array
 const buildPaymentAccepts = () => {
   const accepts: any[] = [];
@@ -104,91 +102,103 @@ const buildPaymentAccepts = () => {
   return accepts;
 };
 
-// Free endpoint - balance check
-app.get("/balance/:workspace", async (req, res) => {
-  try {
-    const workspace = req.params.workspace;
-    const response = await fetch(
-      `${phalaApiUrl}/api/v1/workspaces/${workspace}/x402`,
-      {
-        headers: { "x-api-key": PHALA_CLOUD_API_KEY },
-      }
-    );
+async function main() {
+  const app = express();
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      logger.error(`Phala API error: ${response.status} - ${errorText}`);
-      throw new Error(`Phala API: ${response.status}`);
-    }
-
-    const data = (await response.json()) as { balance?: number };
-    res.json({
-      balance: data.balance ?? 0,
-      workspace,
-      needsTopup: (data.balance ?? 0) < 1.1,
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: "Balance check failed",
-      details: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// Paid endpoint - topup
-app.get(
-  "/topup/:workspace",
-  createMiddleware({
+  // Create the payment middleware
+  const paymentMiddleware = await createMiddleware({
     facilitatorURL,
     accepts: buildPaymentAccepts(),
-  }),
-  async (req, res) => {
+  });
+
+  // Free endpoint - balance check
+  app.get("/balance/:workspace", async (req, res) => {
     try {
       const workspace = req.params.workspace;
-
-      logger.info(
-        `Topping up workspace ${workspace} with ${TOP_UP_COST} CVM credits`
-      );
-
       const response = await fetch(
         `${phalaApiUrl}/api/v1/workspaces/${workspace}/x402`,
         {
-          method: "POST",
-          headers: {
-            "x-api-key": PHALA_CLOUD_API_KEY,
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ amount: TOP_UP_COST }),
+          headers: { "x-api-key": PHALA_CLOUD_API_KEY! },
         }
       );
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error(`Phala topup error: ${response.status} - ${errorText}`);
-        throw new Error(`Phala topup: ${response.status}`);
+        logger.error(`Phala API error: ${response.status} - ${errorText}`);
+        throw new Error(`Phala API: ${response.status}`);
       }
 
       const data = (await response.json()) as { balance?: number };
       res.json({
-        success: true,
-        newBalance: data.balance ?? 0,
+        balance: data.balance ?? 0,
         workspace,
-        paidAmount: TOP_UP_COST,
-        topupAmount: TOP_UP_COST,
+        needsTopup: (data.balance ?? 0) < 1.1,
       });
     } catch (error) {
       res.status(500).json({
-        error: "Topup failed",
+        error: "Balance check failed",
         details: error instanceof Error ? error.message : String(error),
       });
     }
-  }
-);
+  });
 
-const port = 3000;
-app.listen(port, () => {
-  const url = DSTACK_APP_ID && DSTACK_GATEWAY_DOMAIN
-    ? `https://${DSTACK_APP_ID}-${port}.${DSTACK_GATEWAY_DOMAIN}`
-    : `http://localhost:${port}`;
-  console.log(`Server is running on ${url}`);
-})
+  // Paid endpoint - topup
+  app.get(
+    "/topup/:workspace",
+    paymentMiddleware,
+    async (req, res) => {
+      try {
+        const workspace = req.params.workspace;
+
+        logger.info(
+          `Topping up workspace ${workspace} with ${TOP_UP_COST} CVM credits`
+        );
+
+        const response = await fetch(
+          `${phalaApiUrl}/api/v1/workspaces/${workspace}/x402`,
+          {
+            method: "POST",
+            headers: {
+              "x-api-key": PHALA_CLOUD_API_KEY!,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ amount: TOP_UP_COST }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          logger.error(`Phala topup error: ${response.status} - ${errorText}`);
+          throw new Error(`Phala topup: ${response.status}`);
+        }
+
+        const data = (await response.json()) as { balance?: number };
+        res.json({
+          success: true,
+          newBalance: data.balance ?? 0,
+          workspace,
+          paidAmount: TOP_UP_COST,
+          topupAmount: TOP_UP_COST,
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: "Topup failed",
+          details: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+  );
+
+  const port = 3000;
+  app.listen(port, () => {
+    const url = DSTACK_APP_ID && DSTACK_GATEWAY_DOMAIN
+      ? `https://${DSTACK_APP_ID}-${port}.${DSTACK_GATEWAY_DOMAIN}`
+      : `http://localhost:${port}`;
+    console.log(`Server is running on ${url}`);
+  });
+}
+
+main().catch((err) => {
+  logger.error(err);
+  process.exit(1);
+});
