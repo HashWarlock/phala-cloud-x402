@@ -14,8 +14,6 @@ const logger = pino({
   level: process.env.LOG_LEVEL || "info",
 });
 
-type solNetworkType = "devnet" | "testnet" | "mainnet-beta";
-
 // Environment variables
 const {
   TOP_UP_COST,
@@ -50,7 +48,7 @@ const facilitatorURL = FACILITATOR_URL || "https://facilitator.corbits.io";
 
 const splTokenName = "USDC";
 
-const usdcInfo = lookupKnownSPLToken(solanaNetwork as solNetworkType, splTokenName);
+const usdcInfo = lookupKnownSPLToken(solanaNetwork as any, splTokenName);
 if (!usdcInfo) {
   throw new Error(`couldn't look up SPLToken ${splTokenName} on ${solanaNetwork}!`);
 }
@@ -68,13 +66,13 @@ const buildPaymentAccepts = () => {
     });
     accepts.push([
       xSolanaSettlement({
-        network: solanaNetwork as solNetworkType,
+        network: solanaNetwork as any,
         asset: "USDC",
         amount: TOP_UP_COST,
         payTo: SOLANA_RECEIVING_ADDRESS,
       }),
       x402Exact({
-        network: solanaNetwork as solNetworkType,
+        network: solanaNetwork as any,
         asset: "USDC",
         amount: TOP_UP_COST,
         payTo: SOLANA_RECEIVING_ADDRESS,
