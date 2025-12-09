@@ -1,7 +1,6 @@
 import "dotenv/config";
-import { serve } from "@hono/node-server";
-import { Hono } from "hono";
-import { hono as middleware } from "@faremeter/middleware";
+import { default as express } from "express";
+import { createMiddleware } from "@faremeter/middleware/express";
 import { evm } from "@faremeter/info";
 import {
   lookupKnownSPLToken,
@@ -56,13 +55,19 @@ if (!usdcInfo) {
   throw new Error(`couldn't look up SPLToken ${splTokenName} on ${solanaNetwork}!`);
 }
 
-const app = new Hono();
+const app = express();
 
 // Helper function to build payment accepts array
 const buildPaymentAccepts = () => {
   const accepts: any[] = [];
 
   if (SOLANA_RECEIVING_ADDRESS) {
+    logger.info({
+      msg: "Adding Solana payment option",
+      network: solanaNetwork,
+      amount: TOP_UP_COST,
+      payTo: SOLANA_RECEIVING_ADDRESS,
+    });
     accepts.push([
       xSolanaSettlement({
         network: solanaNetwork as solNetworkType,
@@ -80,6 +85,12 @@ const buildPaymentAccepts = () => {
   }
 
   if (EVM_RECEIVING_ADDRESS) {
+    logger.info({
+      msg: "Adding EVM payment option",
+      network: evmNetwork,
+      amount: TOP_UP_COST,
+      payTo: EVM_RECEIVING_ADDRESS,
+    });
     accepts.push(
       evm.x402Exact({
         network: evmNetwork as any,
@@ -94,10 +105,9 @@ const buildPaymentAccepts = () => {
 };
 
 // Free endpoint - balance check
-app.get("/balance/:workspace", async (c) => {
+app.get("/balance/:workspace", async (req, res) => {
   try {
-
-    const workspace = c.req.param("workspace");
+    const workspace = req.params.workspace;
     const response = await fetch(
       `${phalaApiUrl}/api/v1/workspaces/${workspace}/x402`,
       {
@@ -112,32 +122,29 @@ app.get("/balance/:workspace", async (c) => {
     }
 
     const data = (await response.json()) as { balance?: number };
-    return c.json({
+    res.json({
       balance: data.balance ?? 0,
       workspace,
       needsTopup: (data.balance ?? 0) < 1.1,
     });
   } catch (error) {
-    return c.json(
-      {
-        error: "Balance check failed",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      500
-    );
+    res.status(500).json({
+      error: "Balance check failed",
+      details: error instanceof Error ? error.message : String(error),
+    });
   }
 });
 
 // Paid endpoint - topup
 app.get(
   "/topup/:workspace",
-  await middleware.createMiddleware({
+  createMiddleware({
     facilitatorURL,
     accepts: buildPaymentAccepts(),
   }),
-  async (c) => {
+  async (req, res) => {
     try {
-      const workspace = c.req.param("workspace");
+      const workspace = req.params.workspace;
 
       logger.info(
         `Topping up workspace ${workspace} with ${TOP_UP_COST} CVM credits`
@@ -162,7 +169,7 @@ app.get(
       }
 
       const data = (await response.json()) as { balance?: number };
-      return c.json({
+      res.json({
         success: true,
         newBalance: data.balance ?? 0,
         workspace,
@@ -170,21 +177,18 @@ app.get(
         topupAmount: TOP_UP_COST,
       });
     } catch (error) {
-      return c.json(
-        {
-          error: "Topup failed",
-          details: error instanceof Error ? error.message : String(error),
-        },
-        500
-      );
+      res.status(500).json({
+        error: "Topup failed",
+        details: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 );
 
-serve({
-  fetch: app.fetch,
-  port: 3000
-}, (info) => {
-  const url = `https://${DSTACK_APP_ID}-${info.port}.${DSTACK_GATEWAY_DOMAIN}` || `http://localhost:${info.port}`
-  console.log(`Server is running on ${url}`)
+const port = 3000;
+app.listen(port, () => {
+  const url = DSTACK_APP_ID && DSTACK_GATEWAY_DOMAIN
+    ? `https://${DSTACK_APP_ID}-${port}.${DSTACK_GATEWAY_DOMAIN}`
+    : `http://localhost:${port}`;
+  console.log(`Server is running on ${url}`);
 })

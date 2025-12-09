@@ -11,6 +11,7 @@
     "@faremeter/middleware": "^0.14.0",
     "@hono/node-server": "^1.19.6",
     "dotenv": "^17.2.3",
+    "express": "^5.2.1",
     "hono": "^4.10.5",
     "pino": "^10.1.0"
   },
