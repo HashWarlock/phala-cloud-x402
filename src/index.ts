@@ -2,13 +2,20 @@ import "dotenv/config";
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { hono as middleware } from "@faremeter/middleware";
-import { solana, evm } from "@faremeter/info";
+import { evm } from "@faremeter/info";
+import {
+  lookupKnownSPLToken,
+  x402Exact,
+  xSolanaSettlement,
+} from "@faremeter/info/solana";
 import pino from "pino";
 
 // Setup logger
 const logger = pino({
   level: process.env.LOG_LEVEL || "info",
 });
+
+type solNetworkType = "devnet" | "testnet" | "mainnet-beta";
 
 // Environment variables
 const {
@@ -42,6 +49,13 @@ const solanaNetwork = SOLANA_NETWORK || "devnet";
 const phalaApiUrl = process.env.PHALA_API_URL || "https://cloud-api.phala.com";
 const facilitatorURL = FACILITATOR_URL || "https://facilitator.corbits.io";
 
+const splTokenName = "USDC";
+
+const usdcInfo = lookupKnownSPLToken(solanaNetwork as solNetworkType, splTokenName);
+if (!usdcInfo) {
+  throw new Error(`couldn't look up SPLToken ${splTokenName} on ${solanaNetwork}!`);
+}
+
 const app = new Hono();
 
 // Helper function to build payment accepts array
@@ -49,14 +63,20 @@ const buildPaymentAccepts = () => {
   const accepts: any[] = [];
 
   if (SOLANA_RECEIVING_ADDRESS) {
-    accepts.push(
-      solana.x402Exact({
-        network: solanaNetwork as any,
+    accepts.push([
+      xSolanaSettlement({
+        network: solanaNetwork as solNetworkType,
         asset: "USDC",
         amount: TOP_UP_COST,
         payTo: SOLANA_RECEIVING_ADDRESS,
-      })
-    );
+      }),
+      x402Exact({
+        network: solanaNetwork as solNetworkType,
+        asset: "USDC",
+        amount: TOP_UP_COST,
+        payTo: SOLANA_RECEIVING_ADDRESS,
+      }),
+    ]);
   }
 
   if (EVM_RECEIVING_ADDRESS) {

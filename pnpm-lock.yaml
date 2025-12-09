@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@faremeter/info':
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^0.14.0
+        version: 0.14.0
       '@faremeter/middleware':
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^0.14.0
+        version: 0.14.0
       '@hono/node-server':
         specifier: ^1.19.6
         version: 1.19.6(hono@4.10.5)
@@ -201,14 +201,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@faremeter/info@0.12.0':
-    resolution: {integrity: sha512-rQZQO9U2/G9XQ7JDF9pTDlj9Vv4s/zZosK5Vsewm8WCepTJOTESvoNzte3YZ86ip4XqCMFgmcdwVnrL8cM5k3Q==}
+  '@faremeter/info@0.14.0':
+    resolution: {integrity: sha512-c3ognV9LV0rAydWyfFLIDSEn5vFVL8JhvgytkKr8MZKXDVjXtfi6sZNdcAIoPlLWOpZ4uXH740++Zk9As5AFzA==}
 
-  '@faremeter/middleware@0.12.0':
-    resolution: {integrity: sha512-urulJzTDiFkAlyeAAAyti+XblITKUAV5M2TDv2G524wKcIk6DAth8SiozCWOXvqTt/LgO4rTaa9S5bSP0tfMRg==}
+  '@faremeter/middleware@0.14.0':
+    resolution: {integrity: sha512-tbGXTDQTlSfWMRAC8yOhO+UUeZe6i8E4Vcvzqe9cHEYAirj2fhryt6xOLK+IN9SSgdXTYsYZlPOmenRoffymew==}
 
-  '@faremeter/types@0.12.0':
-    resolution: {integrity: sha512-NcGtxc1fmm7m5Y8+jPNy1qOtxHAqiOw66IsDOEbW4R6D/ztYpfD9EIicD9ZvJtarwq28BwFWaPLJenge4LkZHQ==}
+  '@faremeter/types@0.14.0':
+    resolution: {integrity: sha512-fPtLYTWkO8sNlSC2zIR6Y9OLRCzMuXR1YVbT/ewMxKiEnj01LD5FahthG+ZIAXJMmhBXhy/PQJZR6xkVpqwd7g==}
 
   '@hono/node-server@1.19.6':
     resolution: {integrity: sha512-Shz/KjlIeAhfiuE93NDKVdZ7HdBVLQAfdbaXEaoAVO3ic9ibRSLGIQGkcBbFyuLr+7/1D5ZCINM8B+6IvXeMtw==}
@@ -393,18 +393,18 @@ snapshots:
   '@esbuild/win32-x64@0.25.12':
     optional: true
 
-  '@faremeter/info@0.12.0':
+  '@faremeter/info@0.14.0':
     dependencies:
-      '@faremeter/types': 0.12.0
+      '@faremeter/types': 0.14.0
       arktype: 2.1.21
 
-  '@faremeter/middleware@0.12.0':
+  '@faremeter/middleware@0.14.0':
     dependencies:
-      '@faremeter/types': 0.12.0
+      '@faremeter/types': 0.14.0
       '@logtape/logtape': 1.0.4
       arktype: 2.1.21
 
-  '@faremeter/types@0.12.0':
+  '@faremeter/types@0.14.0':
     dependencies:
       arktype: 2.1.21
 
