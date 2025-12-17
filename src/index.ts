@@ -73,7 +73,7 @@ const app = new Hono();
 
 // Helper function to build payment accepts array
 const buildPaymentAccepts = () => {
-  logger.debug({ msg: "Building payment accepts array" });
+  logger.info({ msg: "Building payment accepts array" });
   const accepts: any[] = [];
 
   if (SOLANA_RECEIVING_ADDRESS) {
@@ -129,13 +129,13 @@ app.get("/balance/:workspace", async (c) => {
 
   try {
     const url = `${phalaApiUrl}/api/v1/workspaces/${workspace}/x402`;
-    logger.debug({ msg: "Fetching balance from Phala API", url });
+    logger.info({ msg: "Fetching balance from Phala API", url });
 
     const response = await fetch(url, {
       headers: { "x-api-key": PHALA_CLOUD_API_KEY },
     });
 
-    logger.debug({
+    logger.info({
       msg: "Phala API response received",
       status: response.status,
       ok: response.ok,
@@ -186,7 +186,7 @@ app.get("/balance/:workspace", async (c) => {
 // Paid endpoint - topup
 logger.info({ msg: "Creating payment middleware", facilitatorURL });
 const paymentAccepts = buildPaymentAccepts();
-logger.debug({ msg: "Payment accepts configuration", paymentAccepts });
+logger.info({ msg: "Payment accepts configuration", paymentAccepts });
 
 app.get(
   "/topup/:workspace",
@@ -207,13 +207,13 @@ app.get(
       const adjustedAmount = Number(TOP_UP_COST) / 1_000_000;
       const body = { amount: adjustedAmount };
 
-      logger.debug({
+      logger.info({
         msg: "Adjusted topup amount for Phala API",
         rawAmount: TOP_UP_COST,
         adjustedAmount,
       });
 
-      logger.debug({
+      logger.info({
         msg: "Sending topup request to Phala API",
         url,
         body,
@@ -228,7 +228,7 @@ app.get(
         body: JSON.stringify(body),
       });
 
-      logger.debug({
+      logger.info({
         msg: "Phala topup API response received",
         status: response.status,
         ok: response.ok,
